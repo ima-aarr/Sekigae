@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡単！席替えツール</title>
+    <style>
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+            text-align: center;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+        button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        /* 教室のレイアウト設定 */
+        .classroom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto; /* 画面が小さい時はスクロール */
+            padding-bottom: 20px;
+        }
+        .teacher-desk {
+            background-color: #bdc3c7;
+            width: 200px;
+            padding: 15px;
+            margin-bottom: 40px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: 2px solid #95a5a6;
+            letter-spacing: 5px;
+        }
+        #desk-container {
+            display: grid;
+            gap: 15px;
+            justify-content: center;
+        }
+        .desk {
+            background-color: #f7dc6f;
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #d35400;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+        .empty {
+            background-color: #ecf0f1;
+            border-color: #bdc3c7;
+            color: #95a5a6;
+            box-shadow: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>簡単！席替えツール</h1>
+
+    <div class="controls">
+        <div class="input-group">
+            <label>縦の数（行）: <input type="number" id="rows" value="6" min="1"></label>
+            <label>横の数（列）: <input type="number" id="cols" value="6" min="1"></label>
+        </div>
+        <div class="input-group">
+            <label>クラスの人数: <input type="number" id="students" value="30" min="1"></label>
+        </div>
+        <button onclick="generateSeats()">席替えをする！</button>
+    </div>
+
+    <div class="classroom">
+        <div class="teacher-desk">教卓</div>
+        <div id="desk-container"></div>
+    </div>
+
+    <script>
+        function generateSeats() {
+            // 入力値を取得
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            const students = parseInt(document.getElementById('students').value);
+            const totalSeats = rows * cols;
+
+            // エラーチェック（人数が座席数より多い場合）
+            if (students > totalSeats) {
+                alert('座席数（' + totalSeats + '席）よりも人数（' + students + '人）が多いです！\n縦か横の数を増やしてください。');
+                return;
+            }
+
+            // 1番から人数までの番号が入った配列を作成
+            let seats = Array.from({length: students}, (_, i) => i + 1);
+
+            // 余った席には「空席」を追加
+            const emptySeatsCount = totalSeats - students;
+            for (let i = 0; i < emptySeatsCount; i++) {
+                seats.push('空席');
+            }
+
+            // 配列をシャッフル（Fisher-Yatesアルゴリズム）
+            for (let i = seats.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [seats[i], seats[j]] = [seats[j], seats[i]];
+            }
+
+            // 画面に描画する
+            const container = document.getElementById('desk-container');
+            // CSS Gridの列数を設定
+            container.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+            container.innerHTML = ''; // 一旦クリア
+
+            // 座席を一つずつ生成して追加
+            seats.forEach(student => {
+                const div = document.createElement('div');
+                div.className = 'desk';
+                if (student === '空席') {
+                    div.classList.add('empty');
+                }
+                div.textContent = student;
+                container.appendChild(div);
+            });
+        }
+
+        // ページを読み込んだ時に最初の席を生成しておく
+        window.onload = generateSeats;
+    </script>
+
+</body>
+</html>
