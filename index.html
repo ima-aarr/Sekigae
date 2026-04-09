@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>席替えプロ - リスト入力版</title>
+    <title>席替えプロ - リスト＆番号対応版</title>
     <style>
         :root {
             --bg-color: #f0f2f5;
             --card-bg: #ffffff;
             --primary: #3498db;
-            --priority-zone: #ffeaa7; /* 優先エリアの色 */
-            --marker-color: #ff7675;   /* 色付けの人の色 */
+            --priority-zone: #ffeaa7;
+            --marker-color: #ff7675;
             --text-main: #2d3436;
         }
         body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; }
@@ -25,14 +25,19 @@
         input[type="number"] { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 60px; text-align: center;}
         
         /* 生徒リストのUI */
+        .quick-number-box { background: #eef2f5; padding: 12px; border-radius: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid #dcdde1; }
+        .quick-number-box span { font-weight: bold; font-size: 14px; color: #2f3640; }
+        
         .student-list-container { max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fafafa; }
         .student-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: white; padding: 8px 10px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .student-row input[type="text"] { flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 80px; }
+        .student-row input[type="text"] { flex-grow: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 60px; }
         .student-row label { font-size: 13px; display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+        
         .btn-remove { background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 12px; }
         .btn-add { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; align-self: flex-start;}
+        .btn-green { background: #2ecc71; }
         
-        .bulk-add { display: flex; gap: 5px; margin-top: 10px; }
+        .bulk-add { display: flex; gap: 5px; margin-top: 5px; }
         .bulk-add input { flex-grow: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
 
         .mode-switcher { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -49,7 +54,7 @@
         .desk { 
             width: 70px; height: 70px; background: #fff; border: 2px solid #ddd; border-radius: 8px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; padding: 4px; overflow: hidden;
+            font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; padding: 4px; overflow: hidden;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
         }
         
@@ -86,6 +91,13 @@
 
         <div class="input-group">
             <label class="section-title">2. 生徒の登録</label>
+            
+            <div class="quick-number-box">
+                <span>🔢 番号だけで簡単作成:</span>
+                <input type="number" id="quick-number" value="30" min="1"> 人
+                <button class="btn-add btn-green" onclick="generateNumberList()">番号をセット</button>
+            </div>
+
             <div class="student-list-container" id="student-list">
                 </div>
             
@@ -95,8 +107,8 @@
             </div>
 
             <div class="bulk-add">
-                <input type="text" id="bulk-names" placeholder="カンマ(,)か空白区切りで一括追加 (例: 佐藤 鈴木)">
-                <button class="btn-add" onclick="addBulkStudents()">追加</button>
+                <input type="text" id="bulk-names" placeholder="名前を貼り付け (カンマか空白区切り)">
+                <button class="btn-add" onclick="addBulkStudents()">名前を追加</button>
             </div>
         </div>
     </div>
@@ -132,23 +144,17 @@
     let currentMode = 'remove';
     let selectedDesk = null;
 
-    // --- UI モード切替 ---
     function setMode(mode) {
         currentMode = mode;
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('mode-' + mode).classList.add('active');
         
         const info = document.getElementById('info-text');
-        if(mode === 'remove') {
-            info.innerText = "【形を作る】席をタップして、通路など「使わない席」を点線にしてください。";
-        } else if(mode === 'priority') {
-            info.innerText = "【エリア指定】タップして黄色い「優先エリア」を作ります。チェックを入れた人がここに入ります。";
-        } else if(mode === 'swap') {
-            info.innerText = "【入れ替え】2つの席を順番にタップすると、中身を入れ替えます。";
-        }
+        if(mode === 'remove') info.innerText = "【形を作る】席をタップして、通路など「使わない席」を点線にしてください。";
+        else if(mode === 'priority') info.innerText = "【エリア指定】タップして黄色い「優先エリア」を作ります。チェックを入れた人がここに入ります。";
+        else if(mode === 'swap') info.innerText = "【入れ替え】2つの席を順番にタップすると、中身を入れ替えます。";
     }
 
-    // --- 座席（グリッド）の生成 ---
     function initGrid() {
         const rows = document.getElementById('rows').value;
         const cols = document.getElementById('cols').value;
@@ -164,18 +170,16 @@
         }
     }
 
-    // --- 座席クリック時の動作 ---
     function handleDeskClick(el) {
         if (currentMode === 'remove') {
             el.classList.toggle('removed');
-            el.classList.remove('priority'); // 削除されたら優先設定も解除
+            el.classList.remove('priority');
             el.innerText = '';
         } else if (currentMode === 'priority') {
-            if (el.classList.contains('removed')) return; // 削除された席は優先エリアにできない
+            if (el.classList.contains('removed')) return;
             el.classList.toggle('priority');
         } else if (currentMode === 'swap') {
             if (el.classList.contains('removed')) return;
-            
             if (!selectedDesk) {
                 selectedDesk = el;
                 el.classList.add('selected');
@@ -185,13 +189,10 @@
                     selectedDesk = null;
                     return;
                 }
-
-                // 中身（名前）の入れ替え
                 const tempHTML = el.innerHTML;
                 el.innerHTML = selectedDesk.innerHTML;
                 selectedDesk.innerHTML = tempHTML;
                 
-                // デザイン状態（色付け、空席など）の交換
                 const states = ['marked', 'empty'];
                 states.forEach(s => {
                     const has1 = selectedDesk.classList.contains(s);
@@ -206,94 +207,90 @@
         }
     }
 
-    // --- 生徒リストの管理 ---
-    function addStudentRow(name = '', isMarked = false, isPriority = false) {
+    function addStudentRow(name = '') {
         const container = document.getElementById('student-list');
         const row = document.createElement('div');
         row.className = 'student-row';
-        
         row.innerHTML = `
-            <input type="text" class="stu-name" value="${name}" placeholder="名前を入力">
-            <label><input type="checkbox" class="stu-mark" ${isMarked ? 'checked' : ''}> 赤色</label>
-            <label><input type="checkbox" class="stu-priority" ${isPriority ? 'checked' : ''}> 優先</label>
+            <input type="text" class="stu-name" value="${name}" placeholder="名前か番号">
+            <label><input type="checkbox" class="stu-mark"> 赤色</label>
+            <label><input type="checkbox" class="stu-priority"> 優先</label>
             <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
         `;
         container.appendChild(row);
-        container.scrollTop = container.scrollHeight; // 一番下にスクロール
+        container.scrollTop = container.scrollHeight;
     }
 
     function clearAllStudents() {
-        if(confirm('登録されている生徒をすべて削除しますか？')) {
+        if(confirm('登録されているリストをすべて削除しますか？')) {
             document.getElementById('student-list').innerHTML = '';
         }
     }
 
     function addBulkStudents() {
         const input = document.getElementById('bulk-names');
-        // カンマ、空白、改行で分割
         const names = input.value.split(/[,、\s\n]+/).filter(n => n.trim() !== "");
         names.forEach(name => addStudentRow(name));
-        input.value = ''; // 入力欄をクリア
+        input.value = '';
     }
 
-    // --- 席替えアルゴリズム ---
+    // 【追加機能】人数だけで番号リストを一括作成
+    function generateNumberList(skipConfirm = false) {
+        const count = parseInt(document.getElementById('quick-number').value);
+        if (!count || count < 1) return;
+        
+        if (skipConfirm || confirm(`${count}人分の番号リストを新しく作成しますか？\n（今のリストは上書きされます）`)) {
+            document.getElementById('student-list').innerHTML = '';
+            for (let i = 1; i <= count; i++) {
+                addStudentRow(i.toString()); // 番号をテキストとして追加
+            }
+        }
+    }
+
     function shuffle() {
         const allDesks = Array.from(document.querySelectorAll('.desk:not(.removed)'));
         const priorityDesks = allDesks.filter(d => d.classList.contains('priority'));
         const normalDesks = allDesks.filter(d => !d.classList.contains('priority'));
 
-        // 生徒リストからデータを取得
         let priorityPeople = [];
         let normalPeople = [];
         
         document.querySelectorAll('.student-row').forEach(row => {
             const name = row.querySelector('.stu-name').value.trim();
-            if (!name) return; // 空白の行は無視
-            
+            if (!name) return;
             const isMarked = row.querySelector('.stu-mark').checked;
             const isPriority = row.querySelector('.stu-priority').checked;
             
             const student = { name, isMarked };
-            if (isPriority) {
-                priorityPeople.push(student);
-            } else {
-                normalPeople.push(student);
-            }
+            if (isPriority) priorityPeople.push(student);
+            else normalPeople.push(student);
         });
 
         const totalStudents = priorityPeople.length + normalPeople.length;
 
-        // エラーチェック
         if (totalStudents > allDesks.length) {
-            alert(`席が足りません！\n生徒数: ${totalStudents}人\n有効な席数: ${allDesks.length}席`);
+            alert(`席が足りません！\n人数: ${totalStudents}人\n有効な席数: ${allDesks.length}席`);
             return;
         }
         if (priorityPeople.length > priorityDesks.length) {
-            alert(`優先エリアの席が足りません！\n優先設定の生徒: ${priorityPeople.length}人\n優先席数: ${priorityDesks.length}席`);
+            alert(`優先エリアの席が足りません！\n優先設定の人数: ${priorityPeople.length}人\n優先席数: ${priorityDesks.length}席`);
             return;
         }
 
-        // シャッフル用関数
         const fShuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
-        // まず全ての席をリセット
         allDesks.forEach(d => { d.innerText = ''; d.classList.remove('marked', 'empty'); });
 
-        // 1. 優先エリアの配置
         fShuffle(priorityPeople);
         fShuffle(priorityDesks);
         
-        priorityPeople.forEach((student, i) => {
-            fillDesk(priorityDesks[i], student);
-        });
+        priorityPeople.forEach((student, i) => { fillDesk(priorityDesks[i], student); });
 
-        // 余った優先席は通常席リストに合流させる
         const combinedNormalDesks = [...normalDesks];
         for(let i = priorityPeople.length; i < priorityDesks.length; i++) {
             combinedNormalDesks.push(priorityDesks[i]);
         }
 
-        // 2. 残りの席の配置
         fShuffle(normalPeople);
         fShuffle(combinedNormalDesks);
 
@@ -306,26 +303,18 @@
             }
         });
 
-        // 席替え後は自動的に「個別入れ替え」モードにする
         setMode('swap');
     }
 
-    // 席にデータを流し込む関数
     function fillDesk(el, student) {
         el.innerText = student.name;
-        if (student.isMarked) {
-            el.classList.add('marked');
-        }
+        if (student.isMarked) el.classList.add('marked');
     }
 
-    // --- 初期ロード時の設定 ---
+    // ページを読み込んだら、最初は「30人」の番号リストを作っておく
     window.onload = () => {
         initGrid();
-        // サンプルデータをいくつか入れておく
-        const samples = ['佐藤', '鈴木', '高橋', '田中', '伊藤'];
-        samples.forEach(name => addStudentRow(name));
-        // サンプルとして田中さんだけ優先にする
-        document.querySelectorAll('.student-row')[3].querySelector('.stu-priority').checked = true;
+        generateNumberList(true); 
     };
 </script>
 
