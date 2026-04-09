@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>簡単！席替えツール</title>
+    <title>高機能！席替えツール</title>
     <style>
         body {
             font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
@@ -13,105 +13,113 @@
             margin: 0;
             padding: 20px;
         }
-        h1 {
-            color: #2c3e50;
-        }
+        h1 { color: #2c3e50; font-size: 24px; }
+        
         .controls {
             background: white;
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: inline-block;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            text-align: left;
         }
-        .input-group {
-            margin: 10px 0;
-            font-size: 16px;
-        }
-        input[type="number"] {
-            width: 70px;
-            padding: 8px;
-            margin: 0 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            text-align: center;
-        }
-        button {
-            margin-top: 15px;
-            padding: 12px 30px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 18px;
+        .step-title {
             font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+            color: #e67e22;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f39c12;
+            display: inline-block;
         }
-        button:hover {
-            background-color: #2980b9;
+        .input-group { margin: 10px 0; font-size: 15px; }
+        input[type="number"] {
+            width: 60px; padding: 6px; margin: 0 5px;
+            border: 1px solid #ccc; border-radius: 5px; text-align: center;
         }
-        /* 教室のレイアウト設定 */
+        
+        .btn-group { margin-top: 15px; text-align: center; }
+        button {
+            padding: 10px 20px; margin: 0 5px;
+            border: none; border-radius: 20px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: 0.2s; color: white;
+        }
+        .btn-blue { background-color: #3498db; }
+        .btn-blue:hover { background-color: #2980b9; }
+        .btn-green { background-color: #2ecc71; }
+        .btn-green:hover { background-color: #27ae60; }
+        .btn-red { background-color: #e74c3c; }
+        .btn-red:hover { background-color: #c0392b; }
+
+        .instruction {
+            color: #7f8c8d; font-size: 14px; margin-bottom: 20px;
+        }
+
+        /* 教室レイアウト */
         .classroom {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: auto; /* 画面が小さい時はスクロール */
-            padding-bottom: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: auto; padding-bottom: 20px;
         }
         .teacher-desk {
-            background-color: #bdc3c7;
-            width: 200px;
-            padding: 15px;
-            margin-bottom: 40px;
-            font-weight: bold;
-            border-radius: 8px;
-            border: 2px solid #95a5a6;
-            letter-spacing: 5px;
+            background-color: #bdc3c7; width: 150px; padding: 10px;
+            margin-bottom: 30px; font-weight: bold; border-radius: 8px;
+            border: 2px solid #95a5a6; letter-spacing: 5px;
         }
         #desk-container {
-            display: grid;
-            gap: 15px;
-            justify-content: center;
+            display: grid; gap: 10px; justify-content: center;
+            /* 選択を無効化（ダブルクリックでテキスト選択されるのを防ぐ） */
+            user-select: none; 
         }
         .desk {
-            background-color: #f7dc6f;
-            border: 2px solid #f1c40f;
-            border-radius: 8px;
-            width: 70px;
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #d35400;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+            background-color: #f7dc6f; border: 2px solid #f1c40f;
+            border-radius: 8px; width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold; color: #d35400;
+            cursor: pointer; transition: 0.2s; box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
         }
-        .empty {
-            background-color: #ecf0f1;
-            border-color: #bdc3c7;
-            color: #95a5a6;
-            box-shadow: none;
-            font-size: 14px;
+        
+        /* 状態によるデザインの変化 */
+        .desk:hover { transform: scale(1.05); }
+        .desk.removed {
+            background-color: transparent; border: 2px dashed #ccc;
+            box-shadow: none; color: transparent; cursor: pointer;
+        }
+        .desk.empty {
+            background-color: #ecf0f1; border-color: #bdc3c7;
+            color: #95a5a6; font-size: 12px; box-shadow: none;
+        }
+        .desk.selected {
+            background-color: #e74c3c; border-color: #c0392b; color: white;
+            transform: scale(1.1); box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
         }
     </style>
 </head>
 <body>
 
-    <h1>簡単！席替えツール</h1>
+    <h1>高機能！席替えツール</h1>
 
     <div class="controls">
+        <div class="step-title">1. 基本設定</div>
         <div class="input-group">
-            <label>縦の数（行）: <input type="number" id="rows" value="6" min="1"></label>
-            <label>横の数（列）: <input type="number" id="cols" value="6" min="1"></label>
+            縦: <input type="number" id="rows" value="6" min="1" onchange="createGrid()"> 行 × 
+            横: <input type="number" id="cols" value="6" min="1" onchange="createGrid()"> 列
         </div>
         <div class="input-group">
-            <label>クラスの人数: <input type="number" id="students" value="30" min="1"></label>
+            クラスの人数: <input type="number" id="students" value="30" min="1"> 人
         </div>
-        <button onclick="generateSeats()">席替えをする！</button>
+
+        <div class="btn-group">
+            <button class="btn-blue" onclick="createGrid()">マス目を作り直す</button>
+        </div>
+    </div>
+
+    <div class="instruction" id="instruction-text">
+        【形を作るモード】不要な席をタップして消し、通路などを作ってください。<br>
+        形ができたら下の「席替えをする！」を押してください。
+    </div>
+
+    <div class="btn-group" style="margin-bottom: 30px;">
+        <button class="btn-green" id="shuffle-btn" style="padding: 15px 30px; font-size: 20px;" onclick="generateSeats()">席替えをする！</button>
+        <button class="btn-red" id="reset-btn" style="display: none;" onclick="resetToEditMode()">形を作り直す</button>
     </div>
 
     <div class="classroom">
@@ -120,54 +128,141 @@
     </div>
 
     <script>
-        function generateSeats() {
-            // 入力値を取得
+        let isShuffled = false;
+        let selectedDesk = null;
+
+        // 1. マス目（グリッド）を作成する関数
+        function createGrid() {
             const rows = parseInt(document.getElementById('rows').value);
             const cols = parseInt(document.getElementById('cols').value);
-            const students = parseInt(document.getElementById('students').value);
-            const totalSeats = rows * cols;
+            const container = document.getElementById('desk-container');
+            
+            container.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+            container.innerHTML = '';
+            
+            isShuffled = false;
+            selectedDesk = null;
+            updateInstruction();
 
-            // エラーチェック（人数が座席数より多い場合）
-            if (students > totalSeats) {
-                alert('座席数（' + totalSeats + '席）よりも人数（' + students + '人）が多いです！\n縦か横の数を増やしてください。');
+            // 指定された行×列の数だけマスを作る
+            for (let i = 0; i < rows * cols; i++) {
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                // タップ（クリック）した時の動作を設定
+                desk.onclick = () => handleDeskClick(desk);
+                container.appendChild(desk);
+            }
+        }
+
+        // 2. 席をクリックした時の処理（削除 or 入れ替え）
+        function handleDeskClick(desk) {
+            if (!isShuffled) {
+                // 【席替え前】不要な席をクリックで「削除/復活」する
+                desk.classList.toggle('removed');
+            } else {
+                // 【席替え後】席の入れ替え処理
+                if (desk.classList.contains('removed')) return; // 削除された席は無視
+
+                if (!selectedDesk) {
+                    // 1つ目の席を選択
+                    selectedDesk = desk;
+                    desk.classList.add('selected');
+                } else {
+                    // 同じ席をクリックした場合は選択解除
+                    if (selectedDesk === desk) {
+                        desk.classList.remove('selected');
+                        selectedDesk = null;
+                        return;
+                    }
+
+                    // 2つ目の席を選択したので中身を入れ替える
+                    const text1 = selectedDesk.innerText;
+                    const isEmpty1 = selectedDesk.classList.contains('empty');
+                    const text2 = desk.innerText;
+                    const isEmpty2 = desk.classList.contains('empty');
+
+                    // 1つ目の席に2つ目のデータを入れる
+                    selectedDesk.innerText = text2;
+                    if (isEmpty2) selectedDesk.classList.add('empty');
+                    else selectedDesk.classList.remove('empty');
+
+                    // 2つ目の席に1つ目のデータを入れる
+                    desk.innerText = text1;
+                    if (isEmpty1) desk.classList.add('empty');
+                    else desk.classList.remove('empty');
+
+                    // 選択状態を解除
+                    selectedDesk.classList.remove('selected');
+                    selectedDesk = null;
+                }
+            }
+        }
+
+        // 3. 席替え（ランダム配置）を実行する関数
+        function generateSeats() {
+            const students = parseInt(document.getElementById('students').value);
+            // .removed（削除済み）ではない有効な席だけを取得
+            const activeDesks = Array.from(document.querySelectorAll('.desk:not(.removed)'));
+
+            if (students > activeDesks.length) {
+                alert(`現在有効な座席数（${activeDesks.length}席）よりも、人数（${students}人）が多いです！\nマス目を増やすか、消した席を復活させてください。`);
                 return;
             }
 
-            // 1番から人数までの番号が入った配列を作成
-            let seats = Array.from({length: students}, (_, i) => i + 1);
-
-            // 余った席には「空席」を追加
-            const emptySeatsCount = totalSeats - students;
-            for (let i = 0; i < emptySeatsCount; i++) {
-                seats.push('空席');
+            // 1〜人数までの配列を作成し、余った席には「空席」を入れる
+            let seatsData = Array.from({length: students}, (_, i) => i + 1);
+            const emptyCount = activeDesks.length - students;
+            for (let i = 0; i < emptyCount; i++) {
+                seatsData.push('空席');
             }
 
-            // 配列をシャッフル（Fisher-Yatesアルゴリズム）
-            for (let i = seats.length - 1; i > 0; i--) {
+            // 配列をシャッフル
+            for (let i = seatsData.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [seats[i], seats[j]] = [seats[j], seats[i]];
+                [seatsData[i], seatsData[j]] = [seatsData[j], seatsData[i]];
             }
 
-            // 画面に描画する
-            const container = document.getElementById('desk-container');
-            // CSS Gridの列数を設定
-            container.style.gridTemplateColumns = `repeat(${cols}, auto)`;
-            container.innerHTML = ''; // 一旦クリア
-
-            // 座席を一つずつ生成して追加
-            seats.forEach(student => {
-                const div = document.createElement('div');
-                div.className = 'desk';
-                if (student === '空席') {
-                    div.classList.add('empty');
+            // シャッフルした結果を画面の席に割り当てる
+            activeDesks.forEach((desk, index) => {
+                desk.innerText = seatsData[index];
+                desk.classList.remove('empty', 'selected'); // 一旦リセット
+                if (seatsData[index] === '空席') {
+                    desk.classList.add('empty');
                 }
-                div.textContent = student;
-                container.appendChild(div);
             });
+
+            isShuffled = true;
+            updateInstruction();
         }
 
-        // ページを読み込んだ時に最初の席を生成しておく
-        window.onload = generateSeats;
+        // 4. 最初からやり直す関数
+        function resetToEditMode() {
+            if(confirm('座席の配置をリセットして形を作り直しますか？')) {
+                createGrid();
+            }
+        }
+
+        // UIの表示切り替え
+        function updateInstruction() {
+            const text = document.getElementById('instruction-text');
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            const resetBtn = document.getElementById('reset-btn');
+
+            if (!isShuffled) {
+                text.innerHTML = '【形を作るモード】不要な席をタップして消し、通路などを作ってください。<br>形ができたら下の「席替えをする！」を押してください。';
+                text.style.color = '#7f8c8d';
+                shuffleBtn.style.display = 'inline-block';
+                resetBtn.style.display = 'none';
+            } else {
+                text.innerHTML = '【移動モード】席替えが完了しました！<br><span style="color:#e74c3c; font-weight:bold;">移動させたい生徒を2人順番にタップすると、席を入れ替えることができます。</span>';
+                text.style.color = '#333';
+                shuffleBtn.style.display = 'none';
+                resetBtn.style.display = 'inline-block';
+            }
+        }
+
+        // ページ読み込み時に初期グリッドを作成
+        window.onload = createGrid;
     </script>
 
 </body>
